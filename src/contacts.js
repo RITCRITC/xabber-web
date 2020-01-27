@@ -2423,17 +2423,18 @@ define("xabber-contacts", function () {
 
             open: function () {
                 this.$('.preloader-wrapper').addClass('active');
-                this.$el.openModal({
-                    ready: function () {
-                        this.update();
-                        this.updateScrollBar();
-                    }.bind(this),
-                    complete: function () {
-                        this.showDefaultRestrictions();
-                        this.$el.detach();
-                        this.data.set('visible', false);
-                    }.bind(this)
-                });
+                this.update(function () {
+                    this.$el.openModal({
+                        ready: function () {
+                            this.updateScrollBar();
+                        }.bind(this),
+                        complete: function () {
+                            // this.showDefaultRestrictions();
+                            this.$el.detach();
+                            this.data.set('visible', false);
+                        }.bind(this)
+                    });
+                }.bind(this));
             },
 
             close: function () {
@@ -2444,11 +2445,11 @@ define("xabber-contacts", function () {
                 });
             },
 
-            update: function () {
+            update: function (callback, errback) {
                 this.$('.btn-default-restrictions-save').addClass('non-active');
                 this.default_restrictions = [];
                 this.actual_default_restrictions = [];
-                this.showDefaultRestrictions();
+                this.showDefaultRestrictions(callback, errback);
                 let dropdown_settings = {
                     inDuration: 100,
                     outDuration: 100,
@@ -2512,7 +2513,7 @@ define("xabber-contacts", function () {
                 this.updateSaveButton();
             },
 
-            showDefaultRestrictions: function () {
+            showDefaultRestrictions: function (callback, errback) {
                 this.$('button').blur();
                 let iq_get_rights = $iq({from: this.account.get('jid'), type: 'get', to: this.contact.get('jid') })
                     .c('query', {xmlns: Strophe.NS.GROUP_CHAT + '#default-rights'});
@@ -2545,7 +2546,6 @@ define("xabber-contacts", function () {
                             }
                         }
                     }.bind(this));
-                    this.$('.preloader-wrapper').removeClass('active');
                     this.$('.select-timer .dropdown-button').dropdown({
                         inDuration: 100,
                         outDuration: 100,
@@ -2553,9 +2553,10 @@ define("xabber-contacts", function () {
                         hover: false,
                         alignment: 'left'
                     });
+                    callback && callback();
                 }.bind(this), function () {
                     this.$('.default-restrictions-list-wrap').text('You have no permission to change default restrictions');
-                    this.$('.preloader-wrapper').removeClass('active');
+                    errback && errback();
                 }.bind(this));
             },
 
